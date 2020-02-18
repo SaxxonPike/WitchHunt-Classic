@@ -62,6 +62,7 @@ L["Top"] = "上"
 L["DRAG HERE"] = "点击拖曳"
 
 L["Totem"] = "图腾"
+L["Nobody"] = "Nobody"
 
 L["Format"] = "格式"
 

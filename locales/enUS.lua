@@ -66,6 +66,7 @@ L["Top"] = true
 L["DRAG HERE"] = true
 
 L["Totem"] = true
+L["Nobody"] = true
 
 L["Format"] = true
 

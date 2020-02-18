@@ -63,6 +63,7 @@ L["Top"] = "Oben"
 L["DRAG HERE"] = "HIER BEWEGEN"
 
 L["Totem"] = "Totem"
+L["Nobody"] = "Nobody"
 
 L["Format"] = "Formatierung"
 

@@ -93,14 +93,14 @@ local defaults = {
 	}
 }
 
-local function giveColorGroup( messageformat, caster, effect, icon, spellType, order )
+local function giveColorGroup( messageformat, caster, effect, icon, spellType, order, target )
 	local t = {
 		type = "group", inline = true, order = order,
 		name = "",
 		args = {
 			title = {
 				type = "header",
-				name = function() return WitchHunt:GetFormatted( messageformat, caster, effect, icon) end,
+				name = function() return WitchHunt:GetFormatted( messageformat, caster, effect, icon, target) end,
 				order = 0,
 			},
 			character = {
@@ -160,14 +160,14 @@ local function giveColors()
 	return colors
 end
 
-local function giveFormatGroup( messageformat, caster, effect, icon, order )
+local function giveFormatGroup( messageformat, caster, effect, icon, order, target )
 	local t = {
 		type = "group", inline = true, order = order,
 		name = "",
 		args = {
 			title = {
 				type = "header",
-				name = function() return WitchHunt:GetFormatted( messageformat, caster, effect, icon) end,
+				name = function() return WitchHunt:GetFormatted( messageformat, caster, effect, icon, target) end,
 				order = 0,
 			},
 			text = {
@@ -308,8 +308,8 @@ local function giveOptions()
 				name = L["Test"], type = "execute",
 				desc = L["Test with a dummy WitchHunt message."],
 				func = function()
-					WitchHunt:SendMessage("WitchHunt_Message", WitchHunt:GetFormatted("format_cast", "Ammo", L["Witch Hunt"], doomID))
-					WitchHunt:SendMessage("WitchHunt_Message", WitchHunt:GetFormatted("format_gain", "Ammo", L["Witch Hunt Aura"], doomID))
+					WitchHunt:SendMessage("WitchHunt_Message", WitchHunt:GetFormatted("format_cast", "Ammo", L["Witch Hunt"], doomID, "Saxxon"))
+					WitchHunt:SendMessage("WitchHunt_Message", WitchHunt:GetFormatted("format_gain", "Ammo", L["Witch Hunt Aura"], doomID, nil))
 				end,
 				order= 100,
 			}
@@ -408,9 +408,11 @@ local function giveMFilter()
 			type = "toggle",
 			name = function()
 				if k == "format_totem" then
-					return WitchHunt:GetFormatted(k, "Ammo", L["Witch Hunt Totem"], doomID)
+					return WitchHunt:GetFormatted(k, "Ammo", L["Witch Hunt Totem"], doomID, nil)
+                elseif k == "format_gain" or k == "format_fade" then
+                    return WitchHunt:GetFormatted(k, "Ammo", L["Witch Hunt"], doomID, nil)
 				else
-					return WitchHunt:GetFormatted(k, "Ammo", L["Witch Hunt"], doomID)
+					return WitchHunt:GetFormatted(k, "Ammo", L["Witch Hunt"], doomID, "Saxxon")
 				end
 			end,
 			arg = k,
@@ -486,8 +488,9 @@ end
 
 local iconformat = "|T%s::|t"
 local noicon = ""
-function WitchHunt:GetFormatted( format, caster, effect, spellID )
+function WitchHunt:GetFormatted( format, caster, effect, spellID, target )
 	if not formats[format] then self:BuildFormat(format) end
+	if not target then target = L["Nobody"] end
 	
 	local icon,name,rank
 	if db.icons then
@@ -495,7 +498,7 @@ function WitchHunt:GetFormatted( format, caster, effect, spellID )
 		rank = GetSpellSubtext(spellID)
 		if icon then icon = fmt(iconformat, icon) end
 	end
-	return gsb( gsb( gsb( formats[format], "$c", caster), "$e", effect), "$i", icon or noicon)
+	return gsb( gsb( gsb( gsb( formats[format], "$c", caster), "$e", effect), "$i", icon or noicon), "$t", target)
 end
 
 function WitchHunt:BuildFormats()
@@ -506,6 +509,7 @@ end
 
 function WitchHunt:BuildFormat( format, t )
 	t = rgb2hex(db.colors[format].text.r, db.colors[format].text.g, db.colors[format].text.b) .. t .. "|r"
+	t = gsb(t, "$t", "|r" .. rgb2hex(db.colors[format].character.r, db.colors[format].character.g, db.colors[format].character.b) .."$t|r" .. rgb2hex(db.colors[format].text.r, db.colors[format].text.g, db.colors[format].text.b) )
 	t = gsb(t, "$c", "|r" .. rgb2hex(db.colors[format].character.r, db.colors[format].character.g, db.colors[format].character.b) .."$c|r" .. rgb2hex(db.colors[format].text.r, db.colors[format].text.g, db.colors[format].text.b) )
 	t = gsb(t, "$e", "|r" .. rgb2hex(db.colors[format].spell.r, db.colors[format].spell.g, db.colors[format].spell.b) .."$e|r" .. rgb2hex(db.colors[format].text.r, db.colors[format].text.g, db.colors[format].text.b) )
 	formats[format] = t
@@ -681,7 +685,7 @@ function WitchHunt:RestorePosition()
 end
 
 -- Burn the witch!
-function WitchHunt:Burn(format, caster, effect, spellID)
+function WitchHunt:Burn(format, caster, effect, spellID, target)
 	if not caster or not effect then return end
 	if spellID and db.filtered[spellID] then return end
 	if format and db.mfiltered[format] then return end
@@ -691,7 +695,7 @@ function WitchHunt:Burn(format, caster, effect, spellID)
 		giveOneFilter(spellID)
 	end
 
-	local text = self:GetFormatted(format, caster, effect, spellID)
+	local text = self:GetFormatted(format, caster, effect, spellID, target)
 
 	local t = GetTime()
 	if ( not times[text] ) or ( times[text] and (times[text] + 3) <= t ) then
@@ -745,18 +749,18 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if not isDestEnemy and not isSourceEnemy then return end
 
 	if eventType == "SPELL_AURA_APPLIED" and isDestEnemy and eID == "BUFF" then
-		self:Burn( WH_F_GAIN, dstName, spellName, spellID )
+		self:Burn( WH_F_GAIN, dstName, spellName, spellID, nil )
 	elseif eventType == "SPELL_AURA_REMOVED" and isDestEnemy and eID == "BUFF" then
-		self:Burn( WH_F_FADE, dstName, spellName, spellID )
+		self:Burn( WH_F_FADE, dstName, spellName, spellID, nil )
 	elseif isDestEnemy and (eventType == "SPELL_AURA_DISPELLED" or eventType == "SPELL_DISPEL" or eventType == "SPELL_AURA_STOLEN") then
-		self:Burn( WH_F_DISPEL, dstName, eName, eID )
+		self:Burn( WH_F_DISPEL, dstName, eName, eID, nil )
 	elseif eventType == "SPELL_CAST_START" and isSourceEnemy then
-		self:Burn( WH_F_CAST, srcName, spellName, spellID )
+		self:Burn( WH_F_CAST, srcName, spellName, spellID, dstName )
     elseif eventType == "SPELL_CAST_SUCCESS" and isSourceEnemy then
 		if spellName:find(L["Totem"]) then
-			self:Burn( WH_F_TOTEM, srcName, spellName, spellID )
+			self:Burn( WH_F_TOTEM, srcName, spellName, spellID, nil )
 		else
-			self:Burn( WH_F_SPELL, srcName, spellName, spellID )
+			self:Burn( WH_F_SPELL, srcName, spellName, spellID, dstName )
 		end
 	end
 end
