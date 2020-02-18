@@ -3,6 +3,7 @@
 if not L then return end
 
 L["Witch Hunt"] = "Witch Hunt"
+L["Witch Hunt Classic"] = "Witch Hunt Classic"
 L["Simple spell alert."] = "간단한 주문 경고입니다."
 
 L["Message Output"] = "메세지 출력"

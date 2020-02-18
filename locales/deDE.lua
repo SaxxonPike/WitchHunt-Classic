@@ -4,6 +4,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("WitchHunt", "deDE")
 if not L then return end
 
 L["Witch Hunt"] = "Witch Hunt"
+L["Witch Hunt Classic"] = "Witch Hunt Classic"
 L["Simple spell alert."] = "Simpler Zauberalarm"
 
 L["Message Output"] = "Nachrichten Ausgabe"

@@ -212,7 +212,7 @@ end
 local function giveOptions()
 	local options = {
 		type = "group",
-		name = L["Witch Hunt"],
+		name = L["Witch Hunt Classic"],
 		desc = L["Simple spell alert."],
 		get = function( k ) return db[k.arg] end,
 		set = function( k, v )
@@ -444,7 +444,7 @@ function WitchHunt:OnInitialize()
 
 	local acreg = LibStub("AceConfigRegistry-3.0")
 	
-	acreg:RegisterOptionsTable("Witch Hunt", giveOptions)
+	acreg:RegisterOptionsTable("Witch Hunt Classic", giveOptions)
 	acreg:RegisterOptionsTable("Witch Hunt Output", giveOutput)
 	acreg:RegisterOptionsTable("Witch Hunt Filter", giveFilter)
 	acreg:RegisterOptionsTable("Witch Hunt Profiles", giveProfiles)
@@ -454,14 +454,14 @@ function WitchHunt:OnInitialize()
 	
 	local acdia = LibStub("AceConfigDialog-3.0")
 	
-	local f = acdia:AddToBlizOptions("Witch Hunt", L["Witch Hunt"])
+	local f = acdia:AddToBlizOptions("Witch Hunt Classic", L["Witch Hunt Classic"])
 
-	acdia:AddToBlizOptions("Witch Hunt Colors", L["Message Colors"], L["Witch Hunt"])
-	acdia:AddToBlizOptions("Witch Hunt Format", L["Message Format"], L["Witch Hunt"])
-	acdia:AddToBlizOptions("Witch Hunt Output", L["Message Output"], L["Witch Hunt"])
-	acdia:AddToBlizOptions("Witch Hunt MFilter", L["Message Filter"], L["Witch Hunt"])
-	acdia:AddToBlizOptions("Witch Hunt Filter", L["Spell Filter"], L["Witch Hunt"])
-	acdia:AddToBlizOptions("Witch Hunt Profiles", L["Profiles"], L["Witch Hunt"])
+	acdia:AddToBlizOptions("Witch Hunt Colors", L["Message Colors"], L["Witch Hunt Classic"])
+	acdia:AddToBlizOptions("Witch Hunt Format", L["Message Format"], L["Witch Hunt Classic"])
+	acdia:AddToBlizOptions("Witch Hunt Output", L["Message Output"], L["Witch Hunt Classic"])
+	acdia:AddToBlizOptions("Witch Hunt MFilter", L["Message Filter"], L["Witch Hunt Classic"])
+	acdia:AddToBlizOptions("Witch Hunt Filter", L["Spell Filter"], L["Witch Hunt Classic"])
+	acdia:AddToBlizOptions("Witch Hunt Profiles", L["Profiles"], L["Witch Hunt Classic"])
 
 	self:RegisterChatCommand("witchhunt", function() InterfaceOptionsFrame_OpenToCategory(f) end)
 	self:RegisterChatCommand("wh", function() InterfaceOptionsFrame_OpenToCategory(f) end)

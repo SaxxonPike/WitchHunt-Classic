@@ -22,5 +22,5 @@ locales\zhTW.lua
 locales\zhCN.lua
 locales\deDE.lua
 
-WitchHunt.lua
+WitchHunt-Classic.lua
 

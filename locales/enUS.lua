@@ -4,6 +4,7 @@ local L = LibStub("AceLocale-3.0"):NewLocale("WitchHunt", "enUS", true)
 if not L then return end
 
 L["Witch Hunt"] = true
+L["Witch Hunt Classic"] = true
 L["Simple spell alert."] = true
 
 L["Message Output"] = true
