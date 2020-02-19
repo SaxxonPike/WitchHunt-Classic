@@ -32,6 +32,9 @@ L["Toggle target only mode."] = true
 L["Players Only"] = true
 L["Toggle players only mode. This will only alert for player controlled characters."] = true
 
+L["Hostile Only"] = true
+L["Toggle hostile only mode. This will only alert for hostile characters."] = true
+
 L["Learning Mode"] = true
 L["Learning mode, when enabled will fill the Spell Filter with spells Witch Hunt has detected. You can turn this off once you're satisfied with your filter."] = true
 

@@ -51,6 +51,7 @@ local defaults = {
 		width = 200,
 		height = 160,
 		learn = true,
+		hostileonly = true,
 		filtered = {},
 		mfiltered = {
 			format_spell = true,
@@ -243,6 +244,12 @@ local function giveOptions()
 				desc = L["Toggle players only mode. This will only alert for player controlled characters."],
 				arg = "playeronly",
 				order = 25,
+			},
+			hostileonly = {
+				name = L["Hostile Only"], type = "toggle",
+				desc = L["Toggle hostile only mode. This will only alert for hostile characters."],
+				arg = "hostileonly",
+				order = 26,
 			},
 			learn = {
 				name = L["Learning Mode"], type = "toggle",
@@ -742,17 +749,20 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 		if isDestEnemy and not isDestPC then isDestEnemy = false end
 	end
 	
-	if not isDestEnemy and not isSourceEnemy then return end
+	if db.hostileonly and not isDestEnemy and not isSourceEnemy then return end
+	
+	local isDestTracked = (not db.hostileonly or isDestEnemy)
+	local isSourceTracked = (not db.hostileonly or isSourceEnemy)
 
-	if eventType == "SPELL_AURA_APPLIED" and isDestEnemy and eID == "BUFF" then
+	if eventType == "SPELL_AURA_APPLIED" and isDestTracked and eID == "BUFF" then
 		self:Burn( WH_F_GAIN, dstName, spellName, spellID )
-	elseif eventType == "SPELL_AURA_REMOVED" and isDestEnemy and eID == "BUFF" then
+	elseif eventType == "SPELL_AURA_REMOVED" and isDestTracked and eID == "BUFF" then
 		self:Burn( WH_F_FADE, dstName, spellName, spellID )
-	elseif isDestEnemy and (eventType == "SPELL_AURA_DISPELLED" or eventType == "SPELL_DISPEL" or eventType == "SPELL_AURA_STOLEN") then
+	elseif isDestTracked and (eventType == "SPELL_AURA_DISPELLED" or eventType == "SPELL_DISPEL" or eventType == "SPELL_AURA_STOLEN") then
 		self:Burn( WH_F_DISPEL, dstName, eName, eID )
-	elseif eventType == "SPELL_CAST_START" and isSourceEnemy then
+	elseif eventType == "SPELL_CAST_START" and isSourceTracked then
 		self:Burn( WH_F_CAST, srcName, spellName, spellID )
-    elseif eventType == "SPELL_CAST_SUCCESS" and isSourceEnemy then
+    elseif eventType == "SPELL_CAST_SUCCESS" and isSourceTracked then
 		if spellName:find(L["Totem"]) then
 			self:Burn( WH_F_TOTEM, srcName, spellName, spellID )
 		else
