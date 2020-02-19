@@ -13,6 +13,7 @@ local InSanctuary
 -- local upvales
 local fmt = string.format
 local bitband = bit.band
+local bitbor = bit.bor
 local gsb = string.gsub
 
 local function rgb2hex( r, g, b )
@@ -52,6 +53,7 @@ local defaults = {
 		height = 160,
 		learn = true,
 		hostileonly = true,
+		partyfilter = "excludeparty",
 		filtered = {},
 		mfiltered = {
 			format_spell = true,
@@ -262,6 +264,13 @@ local function giveOptions()
 				desc = L["Add skill icons to the messages. Might not work in some message output targets."],
 				arg = "icons",
 				order = 31,
+			},
+			partyfilter = {
+				name = L["Party Filter"], type = "select",
+				desc = L["When a party filter is applied, determines how alerts originating from your own party are included or excluded."],
+				values = { none = L["None"], partyonly = L["Party Only"], excludeparty = L["Exclude Party"] },
+				arg = "partyfilter",
+				order = 35
 			},
 			descframe = {
 				name = L["The options below affect the built in Witch Hunt message frame. To select messages sent to this frame select the Message Display option from the tree on the left."],
@@ -731,28 +740,47 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if InSanctuary then return end
 	if db.combatonly and not UnitAffectingCombat("player") then return end
 	
-	local isSourceEnemy = (bitband(srcFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE)
-	local isDestEnemy = (bitband(dstFlags, COMBATLOG_OBJECT_REACTION_HOSTILE) == COMBATLOG_OBJECT_REACTION_HOSTILE)
-
-	if db.targetonly  then
-		local isSourceTarget = (bitband(srcFlags, COMBATLOG_OBJECT_TARGET) == COMBATLOG_OBJECT_TARGET)
-		local isDestTarget = (bitband(dstFlags, COMBATLOG_OBJECT_TARGET) == COMBATLOG_OBJECT_TARGET)
-		-- evil but it'll make sure it bails out afterwards :)
-		if isSourceEnemy and not isSourceTarget then isSourceEnemy = false end
-		if isDestEnemy and not isDestTarget then isDestEnemy = false end
+	local partyMask = (bitbor(COMBATLOG_OBJECT_AFFILIATION_MINE, COMBATLOG_OBJECT_AFFILIATION_PARTY, COMBATLOG_OBJECT_AFFILIATION_RAID))
+	local enemyMask = COMBATLOG_OBJECT_REACTION_HOSTILE
+	local isSourceEnemy = (bitband(srcFlags, enemyMask) ~= 0)
+	local isDestEnemy = (bitband(dstFlags, enemyMask) ~= 0)
+	local isSourceParty = (bitband(srcFlags, partyMask) ~= 0)
+	local isDestParty = (bitband(dstFlags, partyMask) ~= 0)
+	
+	local isDestTracked = true
+	local isSourceTracked = true
+	
+	if db.targetonly then
+		local isSourceTarget = (bitband(srcFlags, COMBATLOG_OBJECT_TARGET) ~= 0)
+		local isDestTarget = (bitband(dstFlags, COMBATLOG_OBJECT_TARGET) ~= 0)
+		if isSourceEnemy and not isSourceTarget then isSourceTracked = false end
+		if isDestEnemy and not isDestTarget then isDestTracked = false end
 	end
 	
 	if db.playeronly then
-		local isSourcePC = (bitband(srcFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) == COMBATLOG_OBJECT_CONTROL_PLAYER)
-		local isDestPC = (bitband(dstFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) == COMBATLOG_OBJECT_CONTROL_PLAYER)
-		if isSourceEnemy and not isSourcePC then isSourceEnemy = false end
-		if isDestEnemy and not isDestPC then isDestEnemy = false end
+		local isSourcePC = (bitband(srcFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) ~= 0)
+		local isDestPC = (bitband(dstFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) ~= 0)
+		if isSourceEnemy and not isSourcePC then isSourceTracked = false end
+		if isDestEnemy and not isDestPC then isDestTracked = false end
 	end
 	
-	if db.hostileonly and not isDestEnemy and not isSourceEnemy then return end
+	if not isSourceEnemy then
+		if db.hostileonly then isSourceTracked = false end
+		if not isSourceParty and db.partyfilter == "partyonly" then	isSourceTracked = false end
+	end
+
+	if isSourceParty then
+		if db.partyfilter == "excludeparty" then isSourceTracked = false end
+	end
 	
-	local isDestTracked = (not db.hostileonly or isDestEnemy)
-	local isSourceTracked = (not db.hostileonly or isSourceEnemy)
+	if not isDestEnemy then
+		if db.hostileonly then isDestTracked = false end
+		if not isDestParty and db.partyfilter == "partyonly" then isDestTracked = false end
+	end
+
+	if isDestParty then
+		if db.partyfilter == "excludeparty" then isDestTracked = false end
+	end
 
 	if eventType == "SPELL_AURA_APPLIED" and isDestTracked and eID == "BUFF" then
 		self:Burn( WH_F_GAIN, dstName, spellName, spellID )
