@@ -38,6 +38,9 @@ L["Toggle hostile only mode. This will only alert for hostile characters."] = tr
 L["Learning Mode"] = true
 L["Learning mode, when enabled will fill the Spell Filter with spells Witch Hunt has detected. You can turn this off once you're satisfied with your filter."] = true
 
+L["Show Own Expired Buffs"] = true
+L["If enabled, show alerts for your own auras fading from targets."] = true
+
 L["Party Filter"] = true
 L["When a party filter is applied, determines how alerts originating from your own party are included or excluded."] = true
 L["None"] = true
@@ -46,6 +49,8 @@ L["Exclude Party"] = true
 
 L["Icons"] = true
 L["Add skill icons to the messages. Might not work in some message output targets."] = true
+
+L["The options below affect how messages are filtered."] = true
 
 L["Lock"] = true
 L["Toggle locking of the WitchHunt frame."] = true

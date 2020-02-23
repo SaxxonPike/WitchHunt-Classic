@@ -53,6 +53,7 @@ local defaults = {
 		height = 160,
 		learn = true,
 		hostileonly = true,
+		showownexpiredbuffs = false,
 		partyfilter = "excludeparty",
 		filtered = {},
 		mfiltered = {
@@ -265,17 +266,28 @@ local function giveOptions()
 				arg = "icons",
 				order = 31,
 			},
+			showownexpiredbuffs = {
+				name = L["Show Own Expired Buffs"], type = "toggle",
+				desc = L["If enabled, show alerts for your own auras fading from targets."],
+				arg = "showownexpiredbuffs",
+				order = 35
+			},
+			descfilter = {
+				name = L["The options below affect how messages are filtered."],
+				type = "description",
+				order = 39,
+			},
 			partyfilter = {
 				name = L["Party Filter"], type = "select",
 				desc = L["When a party filter is applied, determines how alerts originating from your own party are included or excluded."],
 				values = { none = L["None"], partyonly = L["Party Only"], excludeparty = L["Exclude Party"] },
 				arg = "partyfilter",
-				order = 35
+				order = 40
 			},
 			descframe = {
 				name = L["The options below affect the built in Witch Hunt message frame. To select messages sent to this frame select the Message Display option from the tree on the left."],
 				type = "description",
-				order = 40,
+				order = 50,
 			},
 			insertmode = {
 				name = L["Insert Mode"], type = "select",
@@ -697,8 +709,8 @@ function WitchHunt:RestorePosition()
 end
 
 -- Burn the witch!
-function WitchHunt:Burn(format, caster, effect, spellID)
-	if not caster or not effect then return end
+function WitchHunt:Burn(format, subject, effect, spellID)
+	if not subject or not effect then return end
 	if spellID and db.filtered[spellID] then return end
 	if format and db.mfiltered[format] then return end
 	
@@ -707,7 +719,7 @@ function WitchHunt:Burn(format, caster, effect, spellID)
 		giveOneFilter(spellID)
 	end
 
-	local text = self:GetFormatted(format, caster, effect, spellID)
+	local text = self:GetFormatted(format, subject, effect, spellID)
 
 	local t = GetTime()
 	if ( not times[text] ) or ( times[text] and (times[text] + 3) <= t ) then
@@ -736,6 +748,7 @@ end
 
 function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	local timestamp, eventType, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, spellID, spellName, spellSchool, eID, eName = CombatLogGetCurrentEventInfo()
+	-- print(timestamp, eventType, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, spellID, spellName, spellSchool, eID, eName)
 	
 	if InSanctuary then return end
 	if db.combatonly and not UnitAffectingCombat("player") then return end
@@ -750,16 +763,18 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	local isDestTracked = true
 	local isSourceTracked = true
 	
+	local isSourceTarget = (bitband(srcFlags, COMBATLOG_OBJECT_TARGET) ~= 0)
+	local isDestTarget = (bitband(dstFlags, COMBATLOG_OBJECT_TARGET) ~= 0)
+
 	if db.targetonly then
-		local isSourceTarget = (bitband(srcFlags, COMBATLOG_OBJECT_TARGET) ~= 0)
-		local isDestTarget = (bitband(dstFlags, COMBATLOG_OBJECT_TARGET) ~= 0)
 		if isSourceEnemy and not isSourceTarget then isSourceTracked = false end
 		if isDestEnemy and not isDestTarget then isDestTracked = false end
 	end
+
+	local isSourcePC = (bitband(srcFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) ~= 0)
+	local isDestPC = (bitband(dstFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) ~= 0)
 	
 	if db.playeronly then
-		local isSourcePC = (bitband(srcFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) ~= 0)
-		local isDestPC = (bitband(dstFlags, COMBATLOG_OBJECT_CONTROL_PLAYER) ~= 0)
 		if isSourceEnemy and not isSourcePC then isSourceTracked = false end
 		if isDestEnemy and not isDestPC then isDestTracked = false end
 	end
@@ -780,6 +795,10 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 
 	if isDestParty then
 		if db.partyfilter == "excludeparty" then isDestTracked = false end
+	end
+	
+	if db.showownexpiredbuffs and isSourcePC and eventType == "SPELL_AURA_REMOVED" then
+		isDestTracked = true
 	end
 
 	if eventType == "SPELL_AURA_APPLIED" and isDestTracked and eID == "BUFF" then
