@@ -759,6 +759,8 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	local isDestEnemy = (bitband(dstFlags, enemyMask) ~= 0)
 	local isSourceParty = (bitband(srcFlags, partyMask) ~= 0)
 	local isDestParty = (bitband(dstFlags, partyMask) ~= 0)
+	local isSourceSelf = (bitband(srcFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) ~= 0)
+	local isDestSelf = (bitband(dstFlags, COMBATLOG_OBJECT_AFFILIATION_MINE) ~= 0)
 	
 	local isDestTracked = true
 	local isSourceTracked = true
@@ -797,7 +799,7 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 		if db.partyfilter == "excludeparty" then isDestTracked = false end
 	end
 	
-	if db.showownexpiredbuffs and isSourcePC and eventType == "SPELL_AURA_REMOVED" then
+	if db.showownexpiredbuffs and isSourceSelf and eventType == "SPELL_AURA_REMOVED" then
 		isDestTracked = true
 	end
 
