@@ -54,6 +54,8 @@ local defaults = {
 		learn = true,
 		hostileonly = true,
 		showownexpiredbuffs = false,
+		showpartyexpiredbuffs = false,
+		showotherexpiredbuffs = false,
 		partyfilter = "excludeparty",
 		filtered = {},
 		mfiltered = {
@@ -267,9 +269,21 @@ local function giveOptions()
 				order = 31,
 			},
 			showownexpiredbuffs = {
-				name = L["Show Own Expired Buffs"], type = "toggle",
-				desc = L["If enabled, show alerts for your own auras fading from targets."],
+				name = L["Fading Buffs on Self"], type = "toggle",
+				desc = L["If enabled, show alerts for your own auras fading."],
 				arg = "showownexpiredbuffs",
+				order = 33
+			},
+			showpartyexpiredbuffs = {
+				name = L["Fading Buffs on Party"], type = "toggle",
+				desc = L["If enabled, show alerts for your own auras on party members fading."],
+				arg = "showpartyexpiredbuffs",
+				order = 34
+			},
+			showotherexpiredbuffs = {
+				name = L["Fading Buffs on Others"], type = "toggle",
+				desc = L["If enabled, show alerts for your own auras on others not in your party fading."],
+				arg = "showotherexpiredbuffs",
 				order = 35
 			},
 			descfilter = {
@@ -798,11 +812,21 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	if isDestParty then
 		if db.partyfilter == "excludeparty" then isDestTracked = false end
 	end
-	
-	if db.showownexpiredbuffs and isSourceSelf and eventType == "SPELL_AURA_REMOVED" then
-		isDestTracked = true
-	end
 
+	if eventType == "SPELL_AURA_REMOVED" and isSourceSelf then
+		if db.showownexpiredbuffs and isDestSelf then
+			isDestTracked = true
+		end
+		
+		if db.showpartyexpiredbuffs and isDestParty and not isDestSelf then
+			isDestTracked = true
+		end
+
+		if db.showotherexpiredbuffs and not isDestParty then
+			isDestTracked = true
+		end
+	end
+	
 	if eventType == "SPELL_AURA_APPLIED" and isDestTracked and eID == "BUFF" then
 		self:Burn( WH_F_GAIN, dstName, spellName, spellID )
 	elseif eventType == "SPELL_AURA_REMOVED" and isDestTracked and eID == "BUFF" then

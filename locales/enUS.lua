@@ -38,8 +38,14 @@ L["Toggle hostile only mode. This will only alert for hostile characters."] = tr
 L["Learning Mode"] = true
 L["Learning mode, when enabled will fill the Spell Filter with spells Witch Hunt has detected. You can turn this off once you're satisfied with your filter."] = true
 
-L["Show Own Expired Buffs"] = true
-L["If enabled, show alerts for your own auras fading from targets."] = true
+L["Fading Buffs on Self"] = true
+L["If enabled, show alerts for your own auras fading."] = true
+
+L["Fading Buffs on Party"] = true
+L["If enabled, show alerts for your own auras on party members fading."] = true
+
+L["Fading Buffs on Others"] = true
+L["If enabled, show alerts for your own auras on others not in your party fading."] = true
 
 L["Party Filter"] = true
 L["When a party filter is applied, determines how alerts originating from your own party are included or excluded."] = true
