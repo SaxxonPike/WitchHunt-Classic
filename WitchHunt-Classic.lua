@@ -56,6 +56,8 @@ local defaults = {
 		showownexpiredbuffs = false,
 		showpartyexpiredbuffs = false,
 		showotherexpiredbuffs = false,
+		enabledebugmode = false,
+		showenvironment = false,
 		partyfilter = "excludeparty",
 		filtered = {},
 		mfiltered = {
@@ -256,6 +258,12 @@ local function giveOptions()
 				arg = "hostileonly",
 				order = 26,
 			},
+			showenvironment = {
+			    name = L["Show Environment"], type = "toggle",
+				desc = L["Toggle whether or not to show environmental effects, such as the fiery explosions during Ragnaros."],
+				arg = "showenvironment",
+				order = 29,
+			},
 			learn = {
 				name = L["Learning Mode"], type = "toggle",
 				desc = L["Learning mode, when enabled will fill the Spell Filter with spells Witch Hunt has detected. You can turn this off once you're satisfied with your filter."],
@@ -285,6 +293,12 @@ local function giveOptions()
 				desc = L["If enabled, show alerts for your own auras on others not in your party fading."],
 				arg = "showotherexpiredbuffs",
 				order = 35
+			},
+			debugmode = {
+			    name = L["Debug Mode"], type = "toggle",
+				desc = L["If enabled, raw message information will be displayed."],
+				arg = "enabledebugmode",
+				order = 38
 			},
 			descfilter = {
 				name = L["The options below affect how messages are filtered."],
@@ -762,13 +776,18 @@ end
 
 function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	local timestamp, eventType, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, spellID, spellName, spellSchool, eID, eName = CombatLogGetCurrentEventInfo()
-	-- print(timestamp, eventType, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, spellID, spellName, spellSchool, eID, eName)
+	
+	if db.enabledebugmode then
+		print(timestamp, eventType, hideCaster, srcGUID, srcName, srcFlags, srcRaidFlags, dstGUID, dstName, dstFlags, dstRaidFlags, spellID, spellName, spellSchool, eID, eName)
+	end
 	
 	if InSanctuary then return end
 	if db.combatonly and not UnitAffectingCombat("player") then return end
 	
 	local partyMask = (bitbor(COMBATLOG_OBJECT_AFFILIATION_MINE, COMBATLOG_OBJECT_AFFILIATION_PARTY, COMBATLOG_OBJECT_AFFILIATION_RAID))
 	local enemyMask = COMBATLOG_OBJECT_REACTION_HOSTILE
+	local envMask = COMBATLOG_OBJECT_TYPE_OBJECT
+	local isSourceEnv = (bitband(srcFlags, envMask) ~= 0)
 	local isSourceEnemy = (bitband(srcFlags, enemyMask) ~= 0)
 	local isDestEnemy = (bitband(dstFlags, enemyMask) ~= 0)
 	local isSourceParty = (bitband(srcFlags, partyMask) ~= 0)
@@ -796,8 +815,12 @@ function WitchHunt:COMBAT_LOG_EVENT_UNFILTERED(...)
 	end
 	
 	if not isSourceEnemy then
-		if db.hostileonly then isSourceTracked = false end
-		if not isSourceParty and db.partyfilter == "partyonly" then	isSourceTracked = false end
+		if isSourceEnv then
+			if not db.showenvironment then isSourceTracked = false end
+		else
+			if db.hostileonly then isSourceTracked = false end
+			if not isSourceParty and db.partyfilter == "partyonly" then	isSourceTracked = false end
+		end
 	end
 
 	if isSourceParty then

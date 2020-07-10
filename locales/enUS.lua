@@ -47,6 +47,9 @@ L["If enabled, show alerts for your own auras on party members fading."] = true
 L["Fading Buffs on Others"] = true
 L["If enabled, show alerts for your own auras on others not in your party fading."] = true
 
+L["Debug Mode"] = true
+L["If enabled, raw message information will be displayed."] = true
+
 L["Party Filter"] = true
 L["When a party filter is applied, determines how alerts originating from your own party are included or excluded."] = true
 L["None"] = true
