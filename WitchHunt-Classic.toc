@@ -1,10 +1,10 @@
-﻿## Interface: 11305
+﻿## Interface: 20501
 ## Title: WitchHunt Classic
 ## Notes: Simple Spell Alert
 ## Notes-koKR: 간단한 주문 경고
 ## Notes-zhCN: 简单的施法警报
 ## Notes-zhTW: 簡單的施法警報
-## Version: 11.3.1
+## Version: 2.5.1.0
 ## Author: Ammo, Saxxon Fox
 ## OptionalDeps: Ace3, LibSink-2.0
 ## X-Category: Interface Enhancements
